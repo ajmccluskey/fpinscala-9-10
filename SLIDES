@@ -1,0 +1,14 @@
+---
+title: FP in Scala
+subtitle: Parsers (Ch 9) and Monoid (Ch 10)
+author: Andrew McCluskey
+institute: VLC
+
+---
+
+# Chapter 9: Parsers
+
+## What's a parser?
+
+ - Unstructured data to structured
+ - e.g. `String` to `Sale` data type
