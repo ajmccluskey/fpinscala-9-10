@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+build() {
+			# espresso haddock pygments kate tango zenburn
+	pandoc -s -t ${1} slides.rst -o fpinscala-9-10.${2} \
+		   --highlight-style=pygments \
+		   -V theme:metropolis \
+		   -V colortheme:crane \
+		   -V progressbar:foot \
+		   -V title:"FP in Scala Chapters 9 and 10" \
+		   -V subtitle:"Parsers and Monoid" \
+		   -V author:"Andrew McCluskey\\\\VLC" \
+		   -V institute:"Veitch Lister Consulting"
+}
+
+build beamer pdf
+#build beamer tex
+#build revealjs html
+
