@@ -7,7 +7,6 @@ Part 1: Intro to FP
 .. role:: latex(raw)
    :format: latex
 
-
 - What is it
 - Datastructures
 - Error handling
@@ -25,6 +24,15 @@ Part 3: Common structures in functional design
 ----------------------------------------------
 
 - **Monoids**
+- Monad
+- Applicative and traversable functors
+
+Part 4: Effects and I/O
+-----------------------
+
+- External effects and I/O
+- Local effects and mutable state
+- Stream processing and incremental I/O
 
 Chapter 9: Parsers
 ==================
@@ -53,26 +61,18 @@ What's a parser?
 
 .. code:: scala
 
-    def parse[A](s: String): List[(A, String)]
+    def parse[Thing](s: String): List[(Thing, String)]
 
 .. [#] `via @hackuador <https://twitter.com/hackuador/status/72567583412035993>`_
 
-----
-
-- Difference between parser *combinators* and *generators*
-- *combinators* for defining parsers by hand
-- *generators* produce a parser from a grammar
+.. ----
+.. 
+.. - Difference between parser *combinators* and *generators*
+.. - *combinators* for defining parsers by hand
+.. - *generators* produce a parser from a grammar
 
 Algebra first design
 --------------------
-
-.. image:: abstract-algebra.jpg
-   :height: 30%
-   :align: center
- 
-.. [#]_
-
-.. [#] CC `kirbyurner on Flickr <https://www.flickr.com/photos/kirbyurner/3176286128>`_
 
 Algebra loosely defined as data types, functions over them, and laws that specify
 how they must work
@@ -93,9 +93,6 @@ Candidate primitive
 
 Running
 -------
-
-For this exercise, a parser for things is a parameterised data type we give to
-a run function from :code:`String`s to :code:`Either`s containing a :code:`ParseError` or thing.
 
 .. code:: scala
 
@@ -150,26 +147,26 @@ Is :code:`orString` really primitive?
  
   def or[A](p1: Parser[A], p2: Parser[A]): Parser[A]
 
-Sugar
------
-
-:latex:`\fontsize{8pt}{10}\selectfont`
-
-.. code:: scala
-
-  trait Parsers[ParseError, Parser[+_]] { self => ...
-
-    def or[A](s1: Parser[A], s2: Parser[A]): Parser[A]
-    implicit def string(s: String): Parser[String]
-    implicit def operators[A](p: Parser[A]) = ParserOps[A](p)
-    implicit def asStringParser[A](a: A)(implicit f: A => Parser[String]):
-      ParserOps[String] = ParserOps(f(a))
-
-    case class ParserOps[A](p: Parser[A]) {
-      def |[B>:A](p2: Parser[B]): Parser[B] = self.or(p,p2)
-      def or[B>:A](p2: => Parser[B]): Parser[B] = self.or(p,p2)
-    }
-  }
+.. Sugar
+.. -----
+.. 
+.. :latex:`\fontsize{8pt}{10}\selectfont`
+.. 
+.. .. code:: scala
+.. 
+..   trait Parsers[ParseError, Parser[+_]] { self => ...
+.. 
+..     def or[A](s1: Parser[A], s2: Parser[A]): Parser[A]
+..     implicit def string(s: String): Parser[String]
+..     implicit def operators[A](p: Parser[A]) = ParserOps[A](p)
+..     implicit def asStringParser[A](a: A)(implicit f: A => Parser[String]):
+..       ParserOps[String] = ParserOps(f(a))
+.. 
+..     case class ParserOps[A](p: Parser[A]) {
+..       def |[B>:A](p2: Parser[B]): Parser[B] = self.or(p,p2)
+..       def or[B>:A](p2: => Parser[B]): Parser[B] = self.or(p,p2)
+..     }
+..   }
 
 .. Let's fix Vim's syntax highlighting... ||
 
@@ -197,7 +194,9 @@ Refinement
 Fleshing out our algebra
 ------------------------
 
-SCENE MISSING
+- An exercise for the reader
+- Still no implementation of :code:`Parser` or :code:`ParseError`
+- Combinators and algebra specify information available to implementations
 
 Context sensitive grammar
 -------------------------
@@ -207,10 +206,19 @@ Context sensitive grammar
 - :code:`"1a", "2bb", "3ccc", ...`
 - :code:`def flatMap[A,B](p: Parser[A])(f: A => Parser[B]): Parser[B]`
 
-Implementing a JSON parser
---------------------------
+Implementing a JSON parser and :code:`Parser` type
+--------------------------------------------------
 
+- Another exercise for the reader
 
+Summary
+--------
+
+- Algebraic design
+  + Remove distraction of implementation details
+  + Use compiler as a sanity check
+  + Laws/properties give us useful checks for implementation
+  + Challenging to work in the abstract if you're not used to it
 
 Part 3: Common structures
 =========================
@@ -229,6 +237,9 @@ It's more than a theory
 - Less cognitive load when dealing in well known abstractions 
 - Common language to talk about these structures
 - Overlap with mathematics means we can steal
+
+Chapter 10: Monoid
+==================
 
 It starts with :code:`Monoid`
 -----------------------------
@@ -282,13 +293,13 @@ Anarchy is overrated
 
 We can use property based testing to ensure each :code:`Monoid` instance obeys the laws
 
-That's what makes it a :code:`Monoid`!
---------------------------------------
-
-- Algebraic abstraction
-- Binary associative operation with an identity
-- Obeys laws of associativity, and left and right identity
-- Instances are technically *not* :code:`Monoids` - the abstraction is
+.. That's what makes it a :code:`Monoid`!
+.. --------------------------------------
+.. 
+.. - Algebraic abstraction
+.. - Binary associative operation with an identity
+.. - Obeys laws of associativity, and left and right identity
+.. - Instances are technically *not* :code:`Monoids` - the abstraction is
 
 Folding :code:`Monoid`s
 -----------------------
@@ -335,16 +346,29 @@ We can also do a balanced fold
 
 ----
 
-The balanced structure allows for parallelism and may be more efficient
+The unbalanced fold concatenates each element in sequence
 
 .. code:: scala
 
-  List("I'm", "faster", "when", "balanced").foldLeft("")(_ + _)
-  List("faster", "when", "balanced").foldLeft("I'm")(_ + _)
-  List("when", "balanced").foldLeft("I'mfaster")(_ + _)
-  List("balanced").foldLeft("I'mfasterwhen")(_ + _)
-  List().foldLeft("I'mfasterwhenbalanced")(_ + _)
-  "I'mfasterwhenbalanced"
+  List("a", "b", "c", "d", "e", "f").foldLeft("")(_ + _)
+  List("b", "c", "d", "e", "f").foldLeft("a")(_ + _)
+  List("c", "d", "e", "f").foldLeft("ab")(_ + _)
+  List("d", "e", "f").foldLeft("abc")(_ + _)
+  List("e", "f").foldLeft("abcd")(_ + _)
+  List("f").foldLeft("abcde")(_ + _)
+  List().foldLeft("abcdef")(_ + _)
+  "abcdef"
+
+----
+
+The balanced structure reduces the size of our inputs for many operations
+
+.. code:: scala
+
+  op(op(op("a", "b"), "c"), op(op("d", "e"), "f"))
+  op(op("ab", "c"), op("de", "f"))
+  op("abc", "def")
+  "abcdef"
 
 Monoid homomorphisms
 --------------------
@@ -400,7 +424,8 @@ Composing :code:`Monoid`s
 .. code:: scala
 
   // Implementing this is an exercise
-  def productMonoid[A,B](A: Monoid[A], B: Monoid[B]): Monoid[(A,B)]
+  def productMonoid[A,B](A: Monoid[A], B: Monoid[B]):
+    Monoid[(A,B)]
 
 ----
 
@@ -444,3 +469,12 @@ We can compose :code:`Monoid` instances to perform multiple calculations in one 
   p: (Int, Int) = (4, 10)
   scala> val mean = p._1 / p._2.toDouble
   mean: Double = 2.5
+
+We can develop combinators for doing this more easily - see chapter notes
+
+Summary
+-------
+
+- Abstractions for common patterns have multiple benefits
+- Obey the laws!
+- :code:`Monoid` is particularly good for parallel computation and fusing traversals
