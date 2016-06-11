@@ -7,6 +7,7 @@ Part 1: Intro to FP
 .. role:: latex(raw)
    :format: latex
 
+
 - What is it
 - Datastructures
 - Error handling
@@ -40,7 +41,8 @@ Chapter 9: Parsers
 It's the journey man
 --------------------
 
-.. image:: journey.jpg
+.. image:: manaslu.jpg
+     :align: center
 
 .. raw:: latex
     \note[itemize] {
@@ -107,11 +109,43 @@ it makes sense at the type level.
 
 .. code:: scala
 
-  trait Parsers[ParseError, Parser[+_]] {
+  trait Parsers[Parser[+_]] {
     def run[A](p: Parser[A])(input: String):
       Either[ParseError,A]
     def char(c: Char): Parser[Char]
   }
+
+Higher kindedness
+-----------------
+
+What's with :code:`Parsers[Parser[+_]]`?
+
+Higher kindedness - type constructors
+-------------------------------------
+
+.. ReST didn't handle the second indent - fall back to latex
+
+.. raw:: latex
+
+  \begin{itemize}
+    \item A \emph{proper} type is one that classifies values
+    \begin{itemize}
+      \item \texttt{String} classifies values but \texttt{List} does not
+    \end{itemize}
+    \item \texttt{Parser} is a \emph{type constructor} and not a proper type
+    \item Type constructors are like functions at the type level
+  \end{itemize}
+
+Higher kindedness - kinds and order
+-----------------------------------
+
+- *kinds* are sometimes referred to as the types of types
+- A type's kind captures the type arguments, if any, that are required to produce a proper type
+- ``Int`` has kind ``*``, and ``List`` has kind ``* -> *``
+- ``Parsers`` is a *higher order* type constructor, or *higher kinded type* [#]_
+  - ``Parsers`` has kind ``(* -> *) -> *`` - takes a type constructor as a type argument
+
+.. [#] See http://stackoverflow.com/questions/6246719/what-is-a-higher-kinded-type-in-scala for more detail
 
 Don't forget the laws
 ---------------------
@@ -406,14 +440,6 @@ Foldable data structures
     def concatenate[A](as: F[A])(m: Monoid[A]): A =
             foldLeft(as)(m.zero)(m.op)
   }
-
-Higher kindedness
------------------
-
-- What's with the :code:`F[_]` parameter in :code:`trait Foldable[F[_]]`?
-- :code:`Foldable` is a *higher kinded type* - it takes a type parameter that
-  itself takes a type parameter
-- *kind* is sometimes referred to as the type of a type
 
 Composing :code:`Monoid`s
 -------------------------
