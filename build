@@ -8,7 +8,7 @@ build() {
 		   -V colortheme:crane \
 		   -V progressbar:foot \
 		   -V title:"FP in Scala Chapters 9 and 10" \
-		   -V subtitle:"Parsers and Monoid" \
+		   -V subtitle:"Parsers and Monoids" \
 		   -V author:"Andrew McCluskey\\\\VLC" \
 		   -V institute:"Veitch Lister Consulting"
 }

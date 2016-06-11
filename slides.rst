@@ -54,7 +54,7 @@ What's a parser?
 ----------------
 
 - Unstructured data to structured
-- e.g. :code:`String` to :code:`Sale` data type
+- e.g. ``String`` to ``Sale`` data type
 
 ----
 
@@ -82,7 +82,7 @@ how they must work
 How should our parser work?
 ---------------------------
 
-- :code:`String` as input
+- ``String`` as input
 - Bake good error values in from the beginning
 - Build up from primitive combinators
 
@@ -118,7 +118,7 @@ it makes sense at the type level.
 Higher kindedness
 -----------------
 
-What's with :code:`Parsers[Parser[+_]]`?
+What's with ``Parsers[Parser[+_]]``?
 
 Higher kindedness - type constructors
 -------------------------------------
@@ -132,7 +132,7 @@ Higher kindedness - type constructors
     \begin{itemize}
       \item \texttt{String} classifies values but \texttt{List} does not
     \end{itemize}
-    \item \texttt{Parser} is a \emph{type constructor} and not a proper type
+    \item \texttt{List} is a \emph{type constructor} and not a proper type
     \item Type constructors are like functions at the type level
   \end{itemize}
 
@@ -142,8 +142,9 @@ Higher kindedness - kinds and order
 - *kinds* are sometimes referred to as the types of types
 - A type's kind captures the type arguments, if any, that are required to produce a proper type
 - ``Int`` has kind ``*``, and ``List`` has kind ``* -> *``
-- ``Parsers`` is a *higher order* type constructor, or *higher kinded type* [#]_
-  - ``Parsers`` has kind ``(* -> *) -> *`` - takes a type constructor as a type argument
+- ``Parsers[Parser[+_]]`` has kind ``(* -> *) -> *``
+  - Takes a type constructor as a type argument
+  - It's a *higher order* type constructor, or *higher kinded type* [#]_
 
 .. [#] See http://stackoverflow.com/questions/6246719/what-is-a-higher-kinded-type-in-scala for more detail
 
@@ -171,10 +172,10 @@ Now we can go nuts adding all of the combinators we need.
     def orString(s1: String, s2: String): Parser[String]
   }
 
-Is :code:`orString` really primitive?
+Is ``orString`` really primitive?
 -------------------------------------
 
-- :code:`orString` doesn't seem primitive enough
+- ``orString`` doesn't seem primitive enough
 - Alternation should work for parsers of any type
 
 .. code:: scala
@@ -204,10 +205,10 @@ Is :code:`orString` really primitive?
 
 .. Let's fix Vim's syntax highlighting... ||
 
-Repetition
-----------
+Another primitive: repetition
+-----------------------------
 
-- It seems very likely we'll want to capture repetitions of :code:`Parser`
+- It seems very likely we'll want to capture repetitions of ``Parser``
 - e.g. We want to parse 10 'a' characters in a row, or 5 instances of some string
 
 .. code:: scala
@@ -229,7 +230,7 @@ Fleshing out our algebra
 ------------------------
 
 - An exercise for the reader
-- Still no implementation of :code:`Parser` or :code:`ParseError`
+- Still no implementation of ``Parser`` or ``ParseError``
 - Combinators and algebra specify information available to implementations
 
 Context sensitive grammar
@@ -237,10 +238,10 @@ Context sensitive grammar
 
 - Context sensitivity is an important characterisitc of grammars
 - Input may determine validity of subsequent input
-- :code:`"1a", "2bb", "3ccc", ...`
-- :code:`def flatMap[A,B](p: Parser[A])(f: A => Parser[B]): Parser[B]`
+- ``"1a", "2bb", "3ccc", ...``
+- ``def flatMap[A,B](p: Parser[A])(f: A => Parser[B]): Parser[B]``
 
-Implementing a JSON parser and :code:`Parser` type
+Implementing a JSON parser and ``Parser`` type
 --------------------------------------------------
 
 - Another exercise for the reader
@@ -262,7 +263,7 @@ What's coming up
 
 - We've developed a number of libraries in earlier parts
 - Now we abstract some patterns seen across them
-- Start with :code:`Monoid` and :code:`Foldable`
+- Start with ``Monoid`` and ``Foldable``
 
 It's more than a theory
 -----------------------
@@ -272,10 +273,10 @@ It's more than a theory
 - Common language to talk about these structures
 - Overlap with mathematics means we can steal
 
-Chapter 10: Monoid
-==================
+Chapter 10: Monoids
+===================
 
-It starts with :code:`Monoid`
+It starts with ``Monoid``
 -----------------------------
 
 - Simple and ubiquitous
@@ -325,17 +326,17 @@ Anarchy is overrated
   // Left and right identity
   op(zero, a) == op(a, zero) == a
 
-We can use property based testing to ensure each :code:`Monoid` instance obeys the laws
+We can use property based testing to ensure each ``Monoid`` instance obeys the laws
 
-.. That's what makes it a :code:`Monoid`!
+.. That's what makes it a ``Monoid``!
 .. --------------------------------------
 .. 
 .. - Algebraic abstraction
 .. - Binary associative operation with an identity
 .. - Obeys laws of associativity, and left and right identity
-.. - Instances are technically *not* :code:`Monoids` - the abstraction is
+.. - Instances are technically *not* ``Monoids`` - the abstraction is
 
-Folding :code:`Monoid`s
+Folding ``Monoid``s
 -----------------------
 
 .. code:: scala
@@ -347,13 +348,13 @@ Folding :code:`Monoid`s
   foldLeft[B](z: B)(f: (B, B) => B): B
   foldRight[B](z: B)(f: (B, B) => B): B
 
-If only we had a :code:`B` and a :code:`(B, B) => B`...
+If only we had a ``B`` and a ``(B, B) => B``...
 
 We do!
 ------
 
-- We can use :code:`zero` and :code:`op` as arguments
-- Both :code:`foldLeft` and :code:`foldRight` give the same result because laws
+- We can use ``zero`` and ``op`` as arguments
+- Both ``foldLeft`` and ``foldRight`` give the same result because laws
 
 .. code:: scala
 
@@ -366,7 +367,7 @@ We do!
 Associativity + parallelism
 ---------------------------
 
-Associativity of :code:`Monoid` means we can fold in either direction
+Associativity of ``Monoid`` means we can fold in either direction
 
 .. code:: scala
 
@@ -407,7 +408,7 @@ The balanced structure reduces the size of our inputs for many operations
 Monoid homomorphisms
 --------------------
 
-:code:`length` is a :code:`Monoid` homomorphism between string
+``length`` is a ``Monoid`` homomorphism between string
 concatenation and integer addition.
 
 .. code:: scala
@@ -415,7 +416,7 @@ concatenation and integer addition.
   length(S.op("foo", "bar"))
   I.op(length("foo"), length("bar"))
 
-In general, functions between types that preserve :code:`Monoid` structure
+In general, functions between types that preserve ``Monoid`` structure
 
 .. code:: scala
 
@@ -424,9 +425,9 @@ In general, functions between types that preserve :code:`Monoid` structure
 Monoid isomorphisms
 -------------------
 
-- Two homomorphisms between types: :code:`f` and :code:`g`
-- :code:`f andThen g` and :code:`g andThen f` are the identity function
-- :code:`Monoid`s for concatenation of :code:`String` and :code:`List[Char]`
+- Two homomorphisms between types: ``f`` and ``g``
+- ``f andThen g`` and ``g andThen f`` are the identity function
+- ``Monoid``s for concatenation of ``String`` and ``List[Char]``
 
 Foldable data structures
 ------------------------
@@ -441,10 +442,10 @@ Foldable data structures
             foldLeft(as)(m.zero)(m.op)
   }
 
-Composing :code:`Monoid`s
+Composing ``Monoid``s
 -------------------------
 
-- :code:`Monoid` instances on their own aren't that compelling
+- ``Monoid`` instances on their own aren't that compelling
 - Their composability makes them more powerful
 
 .. code:: scala
@@ -485,7 +486,7 @@ Composing :code:`Monoid`s
 Fusing traversals
 -----------------
 
-We can compose :code:`Monoid` instances to perform multiple calculations in one pass.
+We can compose ``Monoid`` instances to perform multiple calculations in one pass.
 
 .. code:: raw
 
@@ -503,4 +504,4 @@ Summary
 
 - Abstractions for common patterns have multiple benefits
 - Obey the laws!
-- :code:`Monoid` is particularly good for parallel computation and fusing traversals
+- ``Monoid`` is particularly good for parallel computation and fusing traversals
