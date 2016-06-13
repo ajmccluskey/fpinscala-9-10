@@ -35,11 +35,21 @@ Part 4: Effects and I/O
 - Local effects and mutable state
 - Stream processing and incremental I/O
 
+A note on abstraction
+=====================
+
+----
+
+
+    The purpose of abstraction is not to be vague, but to create a new semantic level in which one can be absolutely precise.
+    -- Edsger Dijkstra
+
 Chapter 9: Parsers
 ==================
 
-It's the journey man
---------------------
+
+It's the journey maaaaan
+------------------------
 
 .. image:: manaslu.jpg
      :align: center
@@ -115,6 +125,18 @@ it makes sense at the type level.
     def char(c: Char): Parser[Char]
   }
 
+Don't forget the laws
+---------------------
+
+Not only can we type check the algebra, we can also start writing down laws.
+
+.. code:: scala
+
+  def charLaw: Prop =
+    Prop.forAll(Gen.stringN(1))(s =>
+      run(char(s.charAt(0)))(s) == Right(s.charAt(0)))
+
+
 Higher kindedness
 -----------------
 
@@ -142,22 +164,11 @@ Higher kindedness - kinds and order
 - *kinds* are sometimes referred to as the types of types
 - A type's kind captures the type arguments, if any, that are required to produce a proper type
 - ``Int`` has kind ``*``, and ``List`` has kind ``* -> *``
-- ``Parsers[Parser[+_]]`` has kind ``(* -> *) -> *``
+- ``Parsers`` has kind ``(* -> *) -> *``
   - Takes a type constructor as a type argument
   - It's a *higher order* type constructor, or *higher kinded type* [#]_
 
 .. [#] See http://stackoverflow.com/questions/6246719/what-is-a-higher-kinded-type-in-scala for more detail
-
-Don't forget the laws
----------------------
-
-Not only can we type check the algebra, we can also start writing down laws.
-
-.. code:: scala
-
-  def charLaw: Prop =
-    Prop.forAll(Gen.stringN(1))(s =>
-      run(char(s.charAt(0)))(s) == Right(s.charAt(0)))
 
 Primitives
 ----------
@@ -166,7 +177,7 @@ Now we can go nuts adding all of the combinators we need.
 
 .. code:: scala
 
-  trait Parsers[ParseError, Parser[+_]] {
+  trait Parsers[Parser[+_]] {
     ...
     def string(s: String): Parser[String]
     def orString(s1: String, s2: String): Parser[String]
@@ -224,20 +235,22 @@ Refinement
 - Ask the questions
   + Should this work for other types?
   + What are the properties/laws I expect to hold?
-  + Could an expression have different semantics, and are they more useful?
+  + What should the semantics of a combinator be? Are there alternatives that would be more useful?
 
 Fleshing out our algebra
 ------------------------
 
 - An exercise for the reader
 - Still no implementation of ``Parser`` or ``ParseError``
-- Combinators and algebra specify information available to implementations
+- Algebra specifies information available to implementations
+  - Smaller surface area for users
+  - Restricts possible implementations
 
 Context sensitive grammar
 -------------------------
 
 - Context sensitivity is an important characterisitc of grammars
-- Input may determine validity of subsequent input
+- Input dictates how subsequent input is parsed
 - ``"1a", "2bb", "3ccc", ...``
 - ``def flatMap[A,B](p: Parser[A])(f: A => Parser[B]): Parser[B]``
 
@@ -290,8 +303,8 @@ Looking for the pattern
 
   val stringExample = "" + "foo" + "bar" + ""
   val intExample    = 1 * 2 * 3 * 4 * 1
-  val andExample    = false && true && false && false
-  val orExample     = true || true || false || false || true
+  val andExample    = true && true && false && true
+  val orExample     = false || true || false || false || false
 
 ----
 
@@ -344,17 +357,18 @@ Folding ``Monoid``s
   foldLeft[B](z: B)(f: (A, B) => B): B
   foldRight[B](z: B)(f: (B, A) => B): B
 
-  // What if A == B
-  foldLeft[B](z: B)(f: (B, B) => B): B
-  foldRight[B](z: B)(f: (B, B) => B): B
+----
 
-If only we had a ``B`` and a ``(B, B) => B``...
+What if ``A == B``
 
-We do!
-------
+.. code:: scala
 
-- We can use ``zero`` and ``op`` as arguments
-- Both ``foldLeft`` and ``foldRight`` give the same result because laws
+   foldLeft[B](z: B)(f: (B, B) => B): B
+   foldRight[B](z: B)(f: (B, B) => B): B
+
+----
+
+Both ``foldLeft`` and ``foldRight`` give the same result because laws
 
 .. code:: scala
 
@@ -396,7 +410,7 @@ The unbalanced fold concatenates each element in sequence
 
 ----
 
-The balanced structure reduces the size of our inputs for many operations
+The balanced structure means we can form a tree of work
 
 .. code:: scala
 
@@ -408,13 +422,15 @@ The balanced structure reduces the size of our inputs for many operations
 Monoid homomorphisms
 --------------------
 
-``length`` is a ``Monoid`` homomorphism between string
-concatenation and integer addition.
+``length`` is a *monoid homomorphism* between the string
+concatenation and integer addition monoids.
 
 .. code:: scala
 
   length(S.op("foo", "bar"))
   I.op(length("foo"), length("bar"))
+  // We can use our homomorphism with foldMap
+  foldMap(List("foo", "bar"), I)(length)
 
 In general, functions between types that preserve ``Monoid`` structure
 
@@ -426,8 +442,9 @@ Monoid isomorphisms
 -------------------
 
 - Two homomorphisms between types: ``f`` and ``g``
-- ``f andThen g`` and ``g andThen f`` are the identity function
-- ``Monoid``s for concatenation of ``String`` and ``List[Char]``
+- e.g. ``f: A => B`` and ``g: B => A``
+- ``f andThen g`` and ``g andThen f`` are both the identity function
+- Monoids for concatenation of ``String`` and ``List[Char]``
 
 Foldable data structures
 ------------------------
