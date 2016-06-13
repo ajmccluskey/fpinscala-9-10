@@ -230,8 +230,7 @@ Refinement
 ----------
 
 - At this point we have the flavour of the process
-- Keep adding combinators and refining them back to the simplest and most general
-  forms that are still practical
+- Keep adding combinators and refining
 - Ask the questions
   + Should this work for other types?
   + What are the properties/laws I expect to hold?
@@ -304,7 +303,7 @@ Looking for the pattern
   val stringExample = "" + "foo" + "bar" + ""
   val intExample    = 1 * 2 * 3 * 4 * 1
   val andExample    = true && true && false && true
-  val orExample     = false || true || false || false || false
+  val orExample     = false || true || false || false
 
 ----
 
